@@ -1,0 +1,45 @@
+---
+title: Form
+description: Persistent form data after submission.
+author: Taufik Nurrohman
+type: Markdown
+version: 2.0.0
+
+use:
+  '.\lot\x\layout': 1
+...
+
+This is useful when you want to validate the form after it has been submitted. It makes it more user friendly in the sense that the user does not have to re-populate certain pieces of information if they do something incorrectly. To maintain form data after the submission action, save the form data to the session named `form`:
+
+~~~ .php
+if (!empty($_POST['blob'])) {
+    $blob = $_POST['blob'];
+    if (!empty($blob['error'])) {
+        // Store all form data to session on error
+        $_SESSION['form'] = $_POST;
+    } else {
+        // Clear all form session on success
+        unset($_SESSION['form']);
+    }
+}
+~~~
+
+The following is an example of generic HTML form markup:
+
+~~~ .html
+<form enctype="multipart/form-data" method="post">
+  <p>
+    <input name="blob" type="file">
+  </p>
+  <p>
+    <!-- These field(s) will have persistent form data. -->
+    <input name="file[name]" type="text">
+    <input name="file[x]" type="text">
+  </p>
+  <p>
+    <button type="submit">
+      Upload
+    </button>
+  </p>
+</form>
+~~~
