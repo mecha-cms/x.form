@@ -74,12 +74,3 @@ function let() {
 
 \Hook::set('content', __NAMESPACE__ . "\\content", 0);
 \Hook::set('let', __NAMESPACE__ . "\\let", 20);
-
-
-
-
-
-
-
-
-
