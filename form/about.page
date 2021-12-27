@@ -32,7 +32,7 @@ The following is an example of generic HTML form markup:
     <input name="blob" type="file">
   </p>
   <p>
-    <!-- These field(s) will have persistent form data. -->
+    <!-- These input(s) will have persistent form data. -->
     <input name="file[name]" type="text">
     <input name="file[x]" type="text">
   </p>

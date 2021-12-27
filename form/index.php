@@ -7,10 +7,12 @@ function content($content) {
     }
     // Convert `foo[bar][baz]` to `form.foo.bar.baz`
     $keys = static function(string $in) {
-        return 'form.' . \trim(\strtr($in, [
+        return \trim(\strtr($in, [
             '.' => "\\.",
-            '][' => '.'
-        ]), '[]');
+            '][' => '.',
+            '[' => '.',
+            ']' => '.'
+        ]), '.');
     };
     if (false !== \strpos($content, '<input ')) {
         $content = \preg_replace_callback('/<input(?:\s[^>]*)?>/', function($m) use($keys, $session) {
