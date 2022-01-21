@@ -5,7 +5,7 @@ function content($content) {
     if (!\is_array($session)) {
         return;
     }
-    // Convert `foo[bar][baz]` to `form.foo.bar.baz`
+    // Convert `foo[bar][baz]` to `foo.bar.baz`
     $keys = static function(string $in) {
         return \trim(\strtr($in, [
             '.' => "\\.",
