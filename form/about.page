@@ -15,7 +15,7 @@ This is useful when you want to validate the form after it has been submitted. I
 ~~~ .php
 if (!empty($_POST['blob'])) {
     $blob = $_POST['blob'];
-    if (!empty($blob['error'])) {
+    if (!empty($blob['status'])) {
         // Store all form data to session on error
         $_SESSION['form'] = $_POST;
     } else {
