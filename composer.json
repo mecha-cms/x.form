@@ -1,0 +1,8 @@
+{
+  "description": "Persistent form data after submission.",
+  "license": "GPL-3.0-or-later",
+  "name": "mecha-cms/x.form",
+  "require": {
+    "mecha-cms/x.layout": "^2.0.0"
+  }
+}
