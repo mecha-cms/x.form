@@ -6,7 +6,7 @@ function content($content) {
         return;
     }
     // Convert `foo[bar][baz]` to `foo.bar.baz`
-    $keys = static function(string $in) {
+    $keys = static function (string $in) {
         return \trim(\strtr($in, [
             '.' => "\\.",
             '][' => '.',
@@ -15,7 +15,7 @@ function content($content) {
         ]), '.');
     };
     if (false !== \strpos($content, '<input ')) {
-        $content = \preg_replace_callback('/<input(?:\s[^>]*)?>/', function($m) use($keys, $session) {
+        $content = \preg_replace_callback('/<input(?:\s[^>]*)?>/', function ($m) use ($keys, $session) {
             $input = new \HTML($m[0]);
             if (!$name = $input['name']) {
                 return $m[0];
@@ -38,14 +38,14 @@ function content($content) {
         }, $content);
     }
     if (false !== \strpos($content, '<select ')) {
-        $content = \preg_replace_callback('/<select(?:\s[^>]*)?>[\s\S]*?<\/select>/', function($m) use($keys, $session) {
+        $content = \preg_replace_callback('/<select(?:\s[^>]*)?>[\s\S]*?<\/select>/', function ($m) use ($keys, $session) {
             $select = new \HTML($m[0]);
             if (!$name = $select['name']) {
                 return $m[0];
             }
             $name = $keys($name);
             $value = \get($session, $name);
-            $select[1] = \preg_replace_callback('/<option(?:\s[^>]*)?>[\s\S]*?<\/option>/', function($m) use($value) {
+            $select[1] = \preg_replace_callback('/<option(?:\s[^>]*)?>[\s\S]*?<\/option>/', function ($m) use ($value) {
                 $option = new \HTML($m[0]);
                 if (isset($value)) {
                     $option['selected'] = \s($value) === \s($option['value'] ?? $option[1]);
@@ -56,7 +56,7 @@ function content($content) {
         }, $content);
     }
     if (false !== \strpos($content, '<textarea ')) {
-        $content = \preg_replace_callback('/<textarea(?:\s[^>]*)?>[\s\S]*?<\/textarea>/', function($m) use($keys, $session) {
+        $content = \preg_replace_callback('/<textarea(?:\s[^>]*)?>[\s\S]*?<\/textarea>/', function ($m) use ($keys, $session) {
             $textarea = new \HTML($m[0]);
             if (!$name = $textarea['name']) {
                 return $m[0];
