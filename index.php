@@ -1,7 +1,7 @@
 <?php namespace x\form;
 
 function content($content) {
-    $session = $_SESSION[\State::get('x.form.key') ?? 'form'] ?? [];
+    $session = $_SESSION['form'] ?? [];
     if (!\is_array($session)) {
         return;
     }
@@ -71,7 +71,7 @@ function content($content) {
 }
 
 function let() {
-    unset($_SESSION[\State::get('x.form.key') ?? 'form']);
+    unset($_SESSION['form']);
 }
 
 \Hook::set('content', __NAMESPACE__ . "\\content", 0);
