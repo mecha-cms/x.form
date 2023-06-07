@@ -1,8 +1,7 @@
 <?php namespace x\form;
 
 function content($content) {
-    $session = $_SESSION['form'] ?? [];
-    if (!\is_array($session)) {
+    if (!\is_array($form = $_SESSION['form'] ?? [])) {
         return;
     }
     // Convert `foo[bar][baz]` to `foo.bar.baz`
@@ -15,7 +14,7 @@ function content($content) {
         ]), '.');
     };
     if (false !== \strpos($content, '<input ')) {
-        $content = \preg_replace_callback('/<input(?:\s(?:"[^"]*"|\'[^\']*\'|[^>])*)?>/', function ($m) use ($keys, $session) {
+        $content = \preg_replace_callback('/<input(?:\s(?:"[^"]*"|\'[^\']*\'|[^>])*)?>/', function ($m) use ($form, $keys) {
             $input = new \HTML($m[0]);
             if (!$name = $input['name']) {
                 return $m[0];
@@ -26,7 +25,7 @@ function content($content) {
                 return $m[0];
             }
             $name = $keys($name);
-            $value = \get($session, $name);
+            $value = \get($form, $name);
             if ('checkbox' === $type || 'radio' === $type) {
                 if (isset($value)) {
                     $input['checked'] = \s($value) === \s($input['value']);
@@ -38,13 +37,13 @@ function content($content) {
         }, $content);
     }
     if (false !== \strpos($content, '<select ')) {
-        $content = \preg_replace_callback('/<select(?:\s(?:"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/select>/', function ($m) use ($keys, $session) {
+        $content = \preg_replace_callback('/<select(?:\s(?:"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/select>/', function ($m) use ($form, $keys) {
             $select = new \HTML($m[0]);
             if (!$name = $select['name']) {
                 return $m[0];
             }
             $name = $keys($name);
-            $value = \get($session, $name);
+            $value = \get($form, $name);
             $select[1] = \preg_replace_callback('/<option(?:\s(?:"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/option>/', function ($m) use ($value) {
                 $option = new \HTML($m[0]);
                 if (isset($value)) {
@@ -56,13 +55,13 @@ function content($content) {
         }, $content);
     }
     if (false !== \strpos($content, '<textarea ')) {
-        $content = \preg_replace_callback('/<textarea(?:\s(?:"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/textarea>/', function ($m) use ($keys, $session) {
+        $content = \preg_replace_callback('/<textarea(?:\s(?:"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/textarea>/', function ($m) use ($form, $keys) {
             $textarea = new \HTML($m[0]);
             if (!$name = $textarea['name']) {
                 return $m[0];
             }
             $name = $keys($name);
-            $value = \get($session, $name);
+            $value = \get($form, $name);
             $textarea[1] = \is_string($value) ? \htmlspecialchars($value) : $textarea[1];
             return $textarea;
         }, $content);
