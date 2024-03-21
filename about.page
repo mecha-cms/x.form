@@ -5,7 +5,7 @@ icon: 'M17,7H22V17H17V19A1,1 0 0,0 18,20H20V22H17.5C16.95,22 16,21.55 16,21C16,2
 color: '#646133'
 author: Taufik Nurrohman
 type: Markdown
-version: 2.0.0
+version: 2.0.1
 ...
 
 This is useful if you want to validate the form after it has been submitted. It makes it more user friendly in the sense
