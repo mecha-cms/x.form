@@ -1,72 +1,144 @@
 <?php namespace x\form;
 
 function content($content) {
-    if (!\is_array($form = $_SESSION['form'] ?? [])) {
+    if (!\is_array($form = $_SESSION['form'] ?? []) || 'text/html' !== \type()) {
         return;
     }
-    // Convert `foo[bar][baz]` to `foo.bar.baz`
-    $keys = static function (string $v) {
-        return \trim(\strtr($v, [
-            '.' => "\\.",
-            '][' => '.',
-            '[' => '.',
-            ']' => '.'
-        ]), '.');
-    };
-    if (false !== \strpos($content, '<input ')) {
-        $content = \preg_replace_callback('/<input(?>\s(?>"[^"]*"|\'[^\']*\'|[^>])*)?>/', static function ($m) use ($form, $keys) {
-            $input = new \HTML($m[0]);
-            if (!$name = $input['name']) {
-                return $m[0];
+    if (false !== ($n = \strpos($content, '<input')) && \strspn($content, " \n\r\t", $n + 6)) {
+    } else if (false !== ($n = \strpos($content, '<select')) && \strspn($content, " \n\r\t", $n + 7)) {
+    } else if (false !== ($n = \strpos($content, '<textarea')) && \strspn($content, " \n\r\t", $n + 9)) {
+    } else {
+        return;
+    }
+    // Convert form name(s) like `asdf[]` to `asdf[0]`
+    $fix = static function (string $name) {
+        static $lot = [];
+        $max = \strlen($name);
+        $r = [];
+        $s = "";
+        for ($i = 0; $i < $max; ++$i) {
+            $c = $name[$i];
+            if ('[' === $c) {
+                if ("" !== $s) {
+                    $r[] = $s;
+                }
+                $s = "";
+                continue;
             }
-            $type = $input['type'];
+            if (']' === $c) {
+                $r[] = $s;
+                $s = "";
+                continue;
+            }
+            $s .= $c;
+        }
+        if ("" !== $s) {
+            $r[] = $s;
+        }
+        $next = static function (array $keys) use (&$lot) {
+            $r =& $lot;
+            foreach ($keys as $key) {
+                if (!isset($r[$key])) {
+                    $r[$key][\P] = 0;
+                }
+                $r =& $r[$key];
+            }
+            return $r[\P]++;
+        };
+        $c = [];
+        $new = [];
+        foreach ($r as $v) {
+            $c[] = $new[] = $v = "" === $v ? $next($c) : $v;
+        }
+        $r = [$s = \array_shift($new) . "", \strtr($s, ['.' => "\\."])];
+        foreach ($new as $k) {
+            $r[0] .= '[' . $k . ']';
+            $r[1] .= '.' . \strtr($k . "", ['.' => "\\."]);
+        }
+        return $r;
+    };
+    $r = "";
+    foreach (\apart($content, [
+        'script', // Need the full token to skip
+        'select', // Need the full token to modify its option(s)
+        'style', // Need the full token to skip
+        'textarea' // Need the full token to modify its content
+    ], ['input']) as $v) {
+        if (1 !== $v[1] && 2 !== $v[1]) {
+            $r .= $v[0];
+            continue;
+        }
+        if ('/' === ($n = \substr($v[0], 1, \strcspn($v[0], " \n\r\t>", 1)))[0] ?? 0) {
+            $r .= $v[0];
+            continue;
+        }
+        if ('input' === $n) {
+            $e = new \HTML($v[0]);
+            $e = [$e[0], $e[1], $e[2]];
+            if (!$name = ($e[2]['name'] ?? 0)) {
+                $r .= $v[0];
+                continue;
+            }
+            $type = $e[2]['type'] ?? 'text';
             if ('file' === $type || 'hidden' === $type || 'password' === $type) {
                 // Disable form session on `file`, `hidden` and `password` input
-                return $m[0];
+                $r .= $v[0];
+                continue;
             }
-            $name = $keys($name);
-            $value = \get($form, $name);
-            if ('checkbox' === $type || 'radio' === $type) {
-                if (isset($value)) {
-                    $input['checked'] = \s($value) === \s($input['value']);
+            $c = $fix($name);
+            $e[2]['name'] = $c[0];
+            if (null !== ($value = \get($form, $c[1]))) {
+                if ('checkbox' === $type || 'radio' === $type) {
+                    $e[2]['checked'] = \s($value) === \s($e[2]['value'] ?? \P);
+                } else {
+                    $e[2]['value'] = \s($value);
                 }
-            } else {
-                $input['value'] = $value ?? $input['value'];
             }
-            return $input;
-        }, $content);
-    }
-    if (false !== \strpos($content, '<select ')) {
-        $content = \preg_replace_callback('/<select(?>\s(?>"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/select>/', static function ($m) use ($form, $keys) {
-            $select = new \HTML($m[0]);
-            if (!$name = $select['name']) {
-                return $m[0];
+            $r .= new \HTML($e, true);
+            continue;
+        }
+        if ('select' === $n) {
+            $e = new \HTML($v[0], 1);
+            $e = [$e[0], $e[1], $e[2]];
+            if (!$name = ($e[2]['name'] ?? 0)) {
+                $r .= $v[0];
+                continue;
             }
-            $name = $keys($name);
-            $value = \get($form, $name);
-            $select[1] = \preg_replace_callback('/<option(?>\s(?>"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/option>/', static function ($m) use ($value) {
-                $option = new \HTML($m[0]);
-                if (isset($value)) {
-                    $option['selected'] = \s($value) === \s($option['value'] ?? $option[1]);
+            $c = $fix($name);
+            $e[2]['name'] = $c[0];
+            if (null !== ($value = \get($form, $c[1]))) {
+                if (!empty($e[2]['multiple'])) {
+                    // TODO
                 }
-                return $option;
-            }, $select[1]);
-            return $select;
-        }, $content);
-    }
-    if (false !== \strpos($content, '<textarea ')) {
-        $content = \preg_replace_callback('/<textarea(?>\s(?>"[^"]*"|\'[^\']*\'|[^\/>])*)?>[\s\S]*?<\/textarea>/', static function ($m) use ($form, $keys) {
-            $textarea = new \HTML($m[0]);
-            if (!$name = $textarea['name']) {
-                return $m[0];
+                foreach ($e[1] as &$f) {
+                    if ('option' !== ($f[0] ?? 0)) {
+                        continue;
+                    }
+                    $f[2]['selected'] = \s($value) === \s($f[2]['value'] ?? $f[1] ?? \P);
+                }
+                unset($f);
             }
-            $name = $keys($name);
-            $value = \get($form, $name);
-            $textarea[1] = \is_string($value) ? \htmlspecialchars($value) : $textarea[1];
-            return $textarea;
-        }, $content);
+            $r .= new \HTML($e, true);
+            continue;
+        }
+        if ('textarea' === $n) {
+            $e = new \HTML($v[0]);
+            $e = [$e[0], $e[1], $e[2]];
+            if (!$name = ($e[2]['name'] ?? 0)) {
+                $r .= $v[0];
+                continue;
+            }
+            $c = $fix($name);
+            $e[2]['name'] = $c[0];
+            if (null !== ($value = \get($form, $c[1]))) {
+                $e[1] = \htmlspecialchars(\s($value));
+            }
+            $r .= new \HTML($e, true);
+            continue;
+        }
+        $r .= $v[0];
     }
-    return $content;
+    return $r;
 }
 
 function let() {
